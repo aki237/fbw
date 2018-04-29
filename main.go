@@ -3,6 +3,7 @@ package main
 import (
 	"archive/zip"
 	"errors"
+	"flag"
 	"fmt"
 	"image"
 	_ "image/gif"
@@ -37,10 +38,16 @@ func getVariable(vm *spacelang.VM, a string) (interface{}, error) {
 }
 
 func main() {
-	if len(os.Args) != 2 {
-		return
+
+	testMode := flag.Bool("t", false, "run in testing mode (doesn't check whether the display-manager.service has started or not)")
+
+	flag.Parse()
+
+	if len(flag.Args()) != 1 {
+		fmt.Println("Requires one dibba file as the pack archive")
 	}
-	f, err := os.Open(os.Args[1])
+
+	f, err := os.Open(flag.Arg(1))
 	if err != nil {
 		fmt.Println(err)
 		return
@@ -148,17 +155,18 @@ func main() {
 		return
 	}
 
-	go func() {
-		status := uint32(3)
-		for status != 0 {
-			err := exec.Command("/usr/bin/systemctl", "is-active", "--quiet", "display-manager.service").Run()
-			if err == nil {
-				status = 0
+	if !*testMode {
+		go func() {
+			status := uint32(3)
+			for status != 0 {
+				err := exec.Command("/usr/bin/systemctl", "is-active", "--quiet", "display-manager.service").Run()
+				if err == nil {
+					status = 0
+				}
 			}
-		}
-		os.Exit(0)
-	}()
-
+			os.Exit(0)
+		}()
+	}
 	err = vm.Eval(string(bs))
 	if err != nil {
 		fmt.Println(err)
