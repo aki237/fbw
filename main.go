@@ -47,7 +47,7 @@ func main() {
 		fmt.Println("Requires one dibba file as the pack archive")
 	}
 
-	f, err := os.Open(flag.Arg(1))
+	f, err := os.Open(flag.Arg(0))
 	if err != nil {
 		fmt.Println(err)
 		return
